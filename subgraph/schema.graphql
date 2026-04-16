@@ -1,0 +1,236 @@
+# VOUCH Protocol Subgraph Schema
+
+type Agent @entity {
+  id: ID! # tokenId
+  tokenId: BigInt!
+  operator: Bytes!
+  agentWallet: Bytes!
+  agentType: Int!
+  subType: Int!
+  metadataHash: Bytes!
+  capabilitiesHash: Bytes!
+  tier: Int!
+  registeredAt: BigInt!
+  active: Boolean!
+  lastActiveAt: BigInt
+  isParent: Boolean!
+  isSubAgent: Boolean!
+  parentAgent: Agent
+  subAgents: [Agent!]! @derivedFrom(field: "parentAgent")
+  
+  # Reputation
+  rawScore: Int!
+  ewmaScore: Int!
+  tasksCompleted: Int!
+  tasksFailed: Int!
+  disputesRaised: Int!
+  disputesWon: Int!
+  totalUsdcProcessed: BigInt!
+  lastUpdated: BigInt!
+  frozenUntil: BigInt
+  
+  # Fleet
+  fleetInfo: FleetInfo
+  
+  # Relations
+  tasks: [Task!]! @derivedFrom(field: "agent")
+  scoreHistory: [ScoreEvent!]! @derivedFrom(field: "agent")
+  raisedDisputes: [Dispute!]! @derivedFrom(field: "raisedBy")
+  anomalies: [AnomalyAlert!]! @derivedFrom(field: "agent")
+  
+  # Metadata
+  displayName: String
+  description: String
+  avatarIpfs: String
+  specializations: [String!]
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type FleetInfo @entity {
+  id: ID! # agent tokenId
+  agent: Agent!
+  maxSubAgents: Int!
+  currentSubAgentCount: Int!
+  subTaskingEnabled: Boolean!
+  delegationDepth: Int!
+  autoOptimization: Boolean!
+  
+  subAgents: [Agent!]!
+  whitelistedSubAgents: [Bytes!]
+}
+
+type Task @entity {
+  id: ID! # UUID from backend
+  taskId: Bytes! # bytes32 on chain
+  poster: Bytes!
+  agent: Agent!
+  
+  amountUsdc: BigInt!
+  status: Int!
+  title: String!
+  description: String
+  requirementsHash: Bytes
+  completionHash: Bytes
+  
+  createdAt: BigInt!
+  deadline: BigInt!
+  acceptedAt: BigInt
+  submissionDeadline: BigInt
+  completedAt: BigInt
+  
+  qualityScore: Int
+  oracleRequestId: Bytes
+  
+  # Relations
+  subTasks: [SubTask!]! @derivedFrom(field: "parentTask")
+  dispute: Dispute
+  reputationEvents: [ScoreEvent!]! @derivedFrom(field: "task")
+  
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SubTask @entity {
+  id: ID! # bytes32
+  taskId: Bytes!
+  parentTask: Task!
+  parentAgent: Agent!
+  subAgent: Agent
+  
+  description: String!
+  requirementsHash: Bytes
+  budgetUsdc: BigInt!
+  deadline: BigInt!
+  
+  status: Int!
+  completionHash: Bytes
+  qualityScore: Int
+  
+  createdAt: BigInt!
+  completedAt: BigInt
+  
+  createdAt: DateTime!
+}
+
+type Dispute @entity {
+  id: ID! # UUID
+  disputeId: Bytes!
+  task: Task!
+  raisedBy: Agent!
+  
+  status: Int!
+  resolution: Int
+  
+  reason: String!
+  evidencePoster: Bytes
+  evidenceAgent: Bytes
+  resolutionNotes: String
+  
+  agentPayout: BigInt
+  scoreDelta: Int
+  
+  createdAt: BigInt!
+  evidenceDeadline: BigInt
+  votingDeadline: BigInt
+  resolvedAt: BigInt
+  
+  votes: [Vote!]! @derivedFrom(field: "dispute")
+  
+  createdAt: DateTime!
+}
+
+type Vote @entity {
+  id: ID! # disputeId + juror
+  dispute: Dispute!
+  juror: Bytes!
+  
+  decision: Int!
+  reasoning: String
+  staked: BigInt!
+  votedAt: BigInt!
+  
+  createdAt: DateTime!
+}
+
+type ScoreEvent @entity {
+  id: ID!
+  agent: Agent!
+  task: Task
+  
+  delta: Int!
+  newRawScore: Int!
+  newEwmaScore: Int!
+  reason: String!
+  
+  txHash: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  
+  createdAt: DateTime!
+}
+
+type AnomalyAlert @entity {
+  id: ID!
+  agent: Agent!
+  
+  anomalyType: Int!
+  severity: Int!
+  confidence: Int!
+  
+  description: String!
+  evidence: String
+  
+  detectedAt: BigInt!
+  acknowledged: Boolean!
+  acknowledgedAt: BigInt
+  resolved: Boolean!
+  resolvedAt: BigInt
+  
+  createdAt: DateTime!
+}
+
+type TierThreshold @entity {
+  id: ID! # tier number
+  tier: Int!
+  minScore: Int!
+  
+  updatedAt: DateTime!
+}
+
+type GovernanceProposal @entity {
+  id: ID!
+  proposalId: BigInt!
+  proposer: Bytes!
+  
+  title: String!
+  description: String!
+  proposalType: String!
+  
+  status: String!
+  votesFor: BigInt!
+  votesAgainst: BigInt!
+  quorumMet: Boolean!
+  
+  proposedAt: BigInt!
+  voteEnd: BigInt!
+  executedAt: BigInt
+  
+  targets: [Bytes!]
+  values: [BigInt!]
+  signatures: [String!]
+  calldatas: [Bytes!]
+  
+  createdAt: DateTime!
+}
+
+# Indexing helpers
+type _Schema_ @entity {
+  account: _Account_
+}
+
+type _Account_ @entity {
+  id: Bytes!
+  agents: [Agent!]!
+}

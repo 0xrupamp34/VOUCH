@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentType {
+  LLM_BASED
+  RULE_BASED
+  HYBRID
+}
+
+enum Tier {
+  UNRANKED
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum TaskStatus {
+  OPEN
+  ACCEPTED
+  SUBMISSION_PENDING
+  VERIFICATION_IN_PROGRESS
+  VERIFIED
+  FAILED
+  DISPUTED
+  RESOLVED
+  EXPIRED
+  CANCELLED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  EVIDENCE_SUBMISSION
+  VOTING
+  RESOLVED
+  APPEALED
+  CANCELLED
+}
+
+enum DisputeResolution {
+  AGENT_WINS
+  POSTER_WINS
+  SPLIT
+  NEGOTIATED
+}
+
+enum AnomalyType {
+  SYBIL_ATTACK
+  RAPID_FARMING
+  COLLUSION
+  SCORE_MANIPULATION
+  QUALITY_ANOMALY
+  BEHAVIOR_ANOMALY
+  WALLET_ANOMALY
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum DelegationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum NegotiationStatus {
+  PROPOSED
+  ACCEPTED
+  COUNTERED
+  REJECTED
+  WITHDRAWN
+}
+
+model Agent {
+  id                 String   @id @default(cuid())
+  tokenId            BigInt   @unique
+  operatorAddr       String   @db.VarChar(42)
+  agentAddr          String   @unique @db.VarChar(42)
+  displayName        String
+  description        String?
+  avatarIpfs         String?
+  agentType          AgentType @default(LLM_BASED)
+  subType            Int       @default(0)
+  specializations    String[]
+  tier               Tier       @default(UNRANKED)
+  rawScore           Int        @default(0)
+  ewmaScore          Int        @default(0)
+  tasksCompleted     Int        @default(0)
+  tasksFailed        Int        @default(0)
+  disputesRaised     Int        @default(0)
+  disputesWon        Int        @default(0)
+  totalUsdcProcessed BigInt     @default(0)
+  metadataIpfs       String?
+  capabilitiesIpfs   String?
+  isActive           Boolean    @default(true)
+  registeredAt       DateTime   @default(now())
+  lastActiveAt       DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  reputationHistory  ReputationHistory[]
+  tasks              Task[]
+  parentFleet        Fleet?           @relation(fields: [fleetId], references: [id])
+  fleetId            String?
+  subAgentOf         SubTask[]        @relation("SubAgent")
+  parentAgentOf      SubTask[]        @relation("ParentAgent")
+  anomalies          AnomalyAlert[]
+  fingerprint        AgentFingerprint?
+  disputesRaised     Dispute[]        @relation("DisputeRaiser")
+  votes              JurorVote[]
+
+  delegationsFrom   Delegation[]      @relation("DelegationFrom")
+  delegationsTo     Delegation[]      @relation("DelegationTo")
+  insurancePolicies InsurancePolicy[]
+  insuranceClaims   InsuranceClaim[]
+  crossChainBridges CrossChainBridge[]
+  zkIdentities     ZkIdentity[]
+
+  @@index([operatorAddr])
+  @@index([tier])
+}
+
+model ZkIdentity {
+  id             String   @id @default(cuid())
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  agentId       String
+  agentWallet   String   @unique @db.VarChar(42)
+  secretHash    String
+  nullifierHash String
+  commitmentX   String
+  commitmentY   String
+  nullifierValue String
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([agentWallet])
+  @@index([active])
+}
+
+model ZkCredential {
+  id            String   @id @default(cuid())
+  credentialId  String   @unique
+  agentWallet   String   @db.VarChar(42)
+  schemaHash    String
+  nullifierHash String
+  issuedAt      DateTime @default(now())
+  expiresAt     DateTime
+  revoked       Boolean  @default(false)
+  revokedAt     DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([agentWallet])
+  @@index([credentialId])
+  @@index([schemaHash])
+}
+
+model EnterpriseClient {
+  id               String   @id @default(cuid())
+  wallet           String   @unique @db.VarChar(42)
+  tier             String
+  companyName      String?
+  subscriptionStart DateTime @default(now())
+  nextBilling      DateTime?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([wallet])
+  @@index([tier])
+}
+  @@index([targetChain])
+  @@index([status])
+}
+
+model CrossChainSync {
+  id           String   @id @default(cuid())
+  bridge       CrossChainBridge @relation(fields: [bridgeId], references: [id])
+  bridgeId     String
+  agentWallet  String   @db.VarChar(42)
+  targetChain  Int
+  oldScore     Int
+  newScore     Int
+  status       String   @default("PENDING")
+  txHash       String?
+  syncedAt     DateTime?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([agentWallet])
+  @@index([targetChain])
+  @@index([status])
+}
+  id           String   @id @default(cuid())
+  disputeId    String   @db.VarChar(66)
+  evidenceHash String   @db.VarChar(66)
+  description  String
+  evidenceType String
+  submittedBy  String   @db.VarChar(42)
+  ipfsHash     String?
+  submittedAt  DateTime @default(now())
+
+  @@index([disputeId])
+  @@index([submittedBy])
+}

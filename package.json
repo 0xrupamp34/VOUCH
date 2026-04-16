@@ -1,0 +1,31 @@
+{
+  "name": "vouch-protocol",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VOUCH - On-Chain Reputation Infrastructure for the Agent Economy",
+  "workspaces": [
+    "contracts",
+    "backend",
+    "frontend",
+    "ai"
+  ],
+  "scripts": {
+    "contracts": "npm run workspace:contracts",
+    "backend": "npm run workspace:backend",
+    "frontend": "npm run workspace:frontend",
+    "ai": "npm run workspace:ai",
+    "dev": "concurrently \"npm run contracts:dev\" \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "build": "npm run contracts:build && npm run backend:build && npm run frontend:build",
+    "test": "npm run contracts:test && npm run backend:test && npm run ai:test",
+    "lint": "npm run contracts:lint && npm run backend:lint && npm run frontend:lint",
+    "clean": "rm -rf contracts/artifacts contracts/cache contracts/typechain && rm -rf backend/dist && rm -rf frontend/.next"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.2.0"
+}

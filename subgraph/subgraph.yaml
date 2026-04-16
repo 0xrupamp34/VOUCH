@@ -1,0 +1,189 @@
+{
+  "name": "vouch-protocol",
+  "version": "1.0.0",
+  "schema": {
+    "file": "./schema.graphql"
+  },
+  "dataSources": [
+    {
+      "name": "AgentRegistry",
+      "network": "base-sepolia",
+      "source": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "abi": "AgentRegistry",
+        "startBlock": 0
+      },
+      "mapping": {
+        "kind": "ethereum/events",
+        "apiVersion": "0.0.7",
+        "language": "wasm/assemblyscript",
+        "file": "./src/mappings/agentRegistry.ts",
+        "entities": [
+          "Agent",
+          "TierUpgraded",
+          "AgentDeactivated",
+          "MetadataUpdated",
+          "FleetConfigured"
+        ],
+        "eventHandlers": [
+          {
+            "event": "AgentRegistered(indexed uint256,indexed address,indexed address,uint8,uint64)",
+            "handler": "handleAgentRegistered"
+          },
+          {
+            "event": "TierUpgraded(indexed uint256,uint8,uint8)",
+            "handler": "handleTierUpgraded"
+          },
+          {
+            "event": "AgentDeactivated(indexed uint256,indexed address,string)",
+            "handler": "handleAgentDeactivated"
+          },
+          {
+            "event": "MetadataUpdated(indexed uint256,bytes32)",
+            "handler": "handleMetadataUpdated"
+          },
+          {
+            "event": "FleetConfigured(indexed uint256,(uint256,uint256,bool,uint256,bool))",
+            "handler": "handleFleetConfigured"
+          }
+        ],
+        "callHandlers": [],
+        "transactionHandlers": []
+      }
+    },
+    {
+      "name": "ReputationEngine",
+      "network": "base-sepolia",
+      "source": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "abi": "ReputationEngine",
+        "startBlock": 0
+      },
+      "mapping": {
+        "kind": "ethereum/events",
+        "apiVersion": "0.0.7",
+        "language": "wasm/assemblyscript",
+        "file": "./src/mappings/reputationEngine.ts",
+        "entities": [
+          "ReputationScore",
+          "ScoreUpdated",
+          "AnomalyDetected"
+        ],
+        "eventHandlers": [
+          {
+            "event": "ScoreInitialized(indexed uint256,int256)",
+            "handler": "handleScoreInitialized"
+          },
+          {
+            "event": "ScoreUpdated(indexed uint256,int256,int256,int256,string)",
+            "handler": "handleScoreUpdated"
+          },
+          {
+            "event": "TierThresholdUpdated(uint8,int256)",
+            "handler": "handleTierThresholdUpdated"
+          },
+          {
+            "event": "AnomalyDetected(indexed uint256,(bool,bool,bool,bool),uint256)",
+            "handler": "handleAnomalyDetected"
+          },
+          {
+            "event": "ScoreFrozen(indexed uint256,uint64)",
+            "handler": "handleScoreFrozen"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TaskEscrow",
+      "network": "base-sepolia",
+      "source": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "abi": "TaskEscrow",
+        "startBlock": 0
+      },
+      "mapping": {
+        "kind": "ethereum/events",
+        "apiVersion": "0.0.7",
+        "language": "wasm/assemblyscript",
+        "file": "./src/mappings/taskEscrow.ts",
+        "entities": [
+          "Task",
+          "TaskCreated",
+          "TaskAccepted",
+          "CompletionSubmitted",
+          "TaskFinalized",
+          "DisputeRaised"
+        ],
+        "eventHandlers": [
+          {
+            "event": "TaskCreated(indexed bytes32,indexed address,indexed uint256,uint256,uint64,string)",
+            "handler": "handleTaskCreated"
+          },
+          {
+            "event": "TaskAccepted(indexed bytes32,indexed uint256)",
+            "handler": "handleTaskAccepted"
+          },
+          {
+            "event": "CompletionSubmitted(indexed bytes32,bytes32)",
+            "handler": "handleCompletionSubmitted"
+          },
+          {
+            "event": "VerificationRequested(indexed bytes32,indexed bytes32)",
+            "handler": "handleVerificationRequested"
+          },
+          {
+            "event": "TaskFinalized(indexed bytes32,bool,uint256,int256)",
+            "handler": "handleTaskFinalized"
+          },
+          {
+            "event": "DisputeRaised(indexed bytes32,indexed address)",
+            "handler": "handleDisputeRaised"
+          },
+          {
+            "event": "SubTaskCreated(indexed bytes32,indexed bytes32,uint256,uint256)",
+            "handler": "handleSubTaskCreated"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DisputeManager",
+      "network": "base-sepolia",
+      "source": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "abi": "DisputeManager",
+        "startBlock": 0
+      },
+      "mapping": {
+        "kind": "ethereum/events",
+        "apiVersion": "0.0.7",
+        "language": "wasm/assemblyscript",
+        "file": "./src/mappings/disputeManager.ts",
+        "entities": [
+          "Dispute",
+          "DisputeCreated",
+          "VoteCast",
+          "DisputeResolved"
+        ],
+        "eventHandlers": [
+          {
+            "event": "DisputeCreated(indexed bytes32,indexed bytes32,indexed address,uint64,uint64)",
+            "handler": "handleDisputeCreated"
+          },
+          {
+            "event": "EvidenceSubmitted(indexed bytes32,indexed address,bytes32)",
+            "handler": "handleEvidenceSubmitted"
+          },
+          {
+            "event": "VoteCast(indexed bytes32,indexed address,uint8)",
+            "handler": "handleVoteCast"
+          },
+          {
+            "event": "DisputeResolved(indexed bytes32,uint8,uint256,int256)",
+            "handler": "handleDisputeResolved"
+          }
+        ]
+      }
+    }
+  ]
+}
